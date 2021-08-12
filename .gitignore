@@ -1,0 +1,5 @@
+.env
+bin/*
+.vscode/
+serverless/
+.serverless/

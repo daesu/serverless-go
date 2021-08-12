@@ -1,0 +1,10 @@
+version: "3.5"
+services:
+  serverless_go:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - .:/opt/app

@@ -1,0 +1,74 @@
+useDotenv: true
+variablesResolutionMode: 20210326
+
+service: serverless-skeleton
+
+provider:
+  name: aws
+  runtime: go1.x
+  region: us-east-1
+  stage: ${opt:stage}
+  versionFunctions: false
+  logRetentionInDays: 1
+  deploymentBucket:
+    serverSideEncryption: AES256
+
+resources:
+  Resources:
+    DBInstance:
+      Type: AWS::RDS::DBInstance
+      Properties:
+        Engine: Postgres
+        DBInstanceIdentifier: platform-service-${opt:stage}
+        DBName: platform
+        MasterUsername: postgres
+        MasterUserPassword: postgres
+        DBInstanceClass: db.t3.micro
+        AllocatedStorage: 20
+        PubliclyAccessible: true
+
+package:
+  individually: true
+  exclude:
+    - ./**
+  include:
+    - ./bin/api
+    - ./bin/message
+
+functions:
+  api:
+    handler: bin/api
+    memorySize: 512
+    timeout: 10
+    package:
+      include:
+        - ./bin/api
+    events:
+      - http:
+          path: /{proxy+}
+          method: any
+          cors: false
+    environment:
+      POSTGRES_CONNECTION:
+        Fn::Join:
+          - ""
+          - - "postgresql://"
+            - "postgres"
+            - ":"
+            - "postgres"
+            - "@"
+            - "Fn::GetAtt": [DBInstance, Endpoint.Address]
+            - ":"
+            - "Fn::GetAtt": [DBInstance, Endpoint.Port]
+            - "/"
+            - "platform"
+            - "?sslmode=require"
+
+  message:
+    handler: bin/message
+    reservedConcurrency: 5
+    memorySize: 512
+    timeout: 10
+    package:
+      include:
+        - ./bin/message
