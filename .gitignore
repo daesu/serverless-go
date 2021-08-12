@@ -3,3 +3,5 @@ bin/*
 .vscode/
 serverless/
 .serverless/
+node_modules/
+bin/
